@@ -1,0 +1,360 @@
+/* =========================================================================
+   GIAO DIỆN PHÁT NHẠC HIỆN ĐẠI - GỌN GÀNG, SẠCH SẼ & NỔI KHỐI ĐỘC LẬP
+   ========================================================================= */
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    padding: 100px 20px 60px 20px; /* Chừa chỗ trống 100px đỉnh đầu cho thanh tìm kiếm găm cứng */
+    display: flex;
+    flex-direction: column;       /* Xếp các khối độc lập từ trên xuống dưới */
+    align-items: center;
+    justify-content: flex-start;  
+    min-height: 100vh;
+    box-sizing: border-box;
+    
+    /* === CẤU HÌNH CHẾ ĐỘ LẶP HÌNH NỀN ĐỒNG BỘ === */
+    background-position: top left;
+    background-repeat: repeat !important;
+    background-size: auto !important;
+    background-attachment: fixed !important; /* Giúp nền đứng yên khi cuộn bài hát, tạo chiều sâu */
+    
+    transition: background-image 0.5s ease-in-out; 
+}
+
+/* Khung chứa trình phát nhạc chính dạng kính mờ tinh tế */
+.player-container {
+    max-width: 480px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.45); 
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Tự động co giãn khoảng cách các khối bên trong ngay ngắn */
+}
+
+/* Tiêu đề trạng thái danh mục nhạc */
+#status-msg {
+    text-align: center; 
+    font-size: 16px; 
+    color: #333; 
+    margin: 0 0 5px 0;
+    font-weight: 600;
+}
+
+/* Tiêu đề bài hát hiển thị nổi bật */
+#song-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e3a8a;
+    text-align: center;
+    margin: 5px 0;
+    word-break: break-word;
+}
+
+/* Cấu hình khung Iframe phát nhạc từ Google Drive */
+iframe {
+    width: 100%;
+    height: 120px !important;    
+    border-radius: 12px;
+    background: #000;
+    border: none;
+    zoom: 1.1;                     
+    -moz-transform: scale(1.1);    
+    filter: contrast(115%) brightness(105%); 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* Cụm nút điều khiển tiến/lùi bài hát lớn, trực quan */
+.controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    margin: 5px 0;
+}
+.control-btn-large {
+    font-size: 32px !important;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s;
+    user-select: none;
+}
+.control-btn-large:hover {
+    transform: scale(1.2) !important;
+}
+
+/* Thư mục danh sách nhạc bài hát */
+.folder-section-title {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background-color: rgba(255, 255, 255, 0.6);
+    margin-top: 8px;
+    border-radius: 10px;
+    font-weight: bold;
+    color: #333;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: background 0.2s;
+}
+.folder-section-title.favorites-heading {
+    background-color: rgba(255, 230, 235, 0.8) !important;
+    color: #c62828 !important;
+    border-color: rgba(255, 205, 210, 0.8) !important;
+}
+.folder-section-title:hover {
+    background-color: rgba(255, 255, 255, 0.85);
+}
+.folder-section-title::after {
+    content: '▼';
+    font-size: 11px;
+    color: #666;
+    transition: transform 0.3s ease;
+}
+.folder-section-title.collapsed::after {
+    transform: rotate(-90deg);
+}
+
+/* Danh sách bài hát (ul playlist) */
+.playlist {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    max-height: 20000px; 
+    opacity: 1;
+    transition: max-height 0.4s ease-in-out, opacity 0.3s;
+}
+.folder-section-title.collapsed + .playlist {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.playlist li {
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+.playlist li:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+.playlist li.active {
+    background-color: rgba(33, 150, 243, 0.15);
+    color: #2196f3;
+    font-weight: bold;
+    border-radius: 8px;
+}
+
+/* Nút trái tim yêu thích */
+.fav-heart {
+    color: #ccc;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 6px;
+    transition: transform 0.2s, color 0.2s;
+    user-select: none;
+}
+.fav-heart:hover { transform: scale(1.2); }
+.fav-heart.active {
+    color: #e91e63;
+    text-shadow: 0 0 2px rgba(233, 30, 99, 0.3);
+}
+
+/* Sóng nhạc mini nhảy múa khi đang phát bài hát */
+.wave-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 14px;
+    margin-left: auto;
+    margin-right: 15px;
+}
+.wave-bar {
+    width: 3px;
+    height: 100%;
+    background-color: #2196f3;
+    border-radius: 2px;
+    animation: bounce 0.8s ease-in-out infinite alternate;
+}
+.wave-bar:nth-child(1) { animation-delay: 0.1s; }
+.wave-bar:nth-child(2) { animation-delay: 0.4s; }
+.wave-bar:nth-child(3) { animation-delay: 0.2s; }
+.wave-bar:nth-child(4) { animation-delay: 0.6s; }
+
+@keyframes bounce {
+    0% { height: 20%; }
+    100% { height: 100%; }
+}
+
+
+/* =========================================================================
+   MỤC TÌM KIẾM CỐ ĐỊNH ĐỈNH - ĐỨNG YÊN CHỐNG LAG: TÍM NHẠT -> CAM -> CAM ĐỎ
+   ========================================================================= */
+.search-box.outer-search {
+    position: fixed;
+    top: 15px;                
+    left: 50%;
+    transform: translateX(-50%); 
+    width: 100%;
+    max-width: 480px;         
+    box-sizing: border-box;
+    z-index: 99999;           
+    padding: 12px;
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    gap: 8px; /* Giãn cách đều giữa ba khối: Ô nhập - Nút tìm kiếm - Nút Trang chủ */
+
+    /* TÔNG MÀU CỐ ĐỊNH ĐỨNG YÊN CHỐNG LAG: Tím nhẹ -> Cam -> Cam đỏ */
+    background: linear-gradient(45deg, 
+        rgba(179, 157, 219, 0.5),   
+        rgba(255, 152, 0, 0.5),     
+        rgba(255, 87, 34, 0.55)     
+    ) !important;
+    
+    background-size: auto !important;
+    animation: none !important;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12); 
+    transition: all 0.3s ease;
+}
+
+/* Ô nhập chữ tìm kiếm bên trong */
+.outer-search input {
+    flex: 1;
+    padding: 12px 14px;             
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.82);
+    
+    /* Ép font-size lên chuẩn 16px chặn tính năng tự động phóng to màn hình trên iPhone/Android */
+    font-size: 16px !important;
+    
+    font-weight: 600;
+    outline: none;
+    color: #4a148c; 
+    transition: all 0.25s ease;
+}
+.outer-search input::placeholder {
+    color: #5a6472;
+    font-weight: 500;
+}
+.outer-search input:focus {
+    border-color: #ffffff;
+    background: #ffffff;
+    color: #000000;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+}
+
+/* NÚT ACTION TÌM KIẾM - MÀU CAM NHẸ ĐỒNG BỘ GỌN GÀNG */
+.search-action-btn {
+    background: #ffab91 !important; 
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #4a148c !important;       
+    padding: 0 14px;
+    font-size: 13px;
+    font-weight: bold;
+    border-radius: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.search-action-btn:hover {
+    background: #ff8a65 !important; 
+    color: #ffffff !important;       
+    box-shadow: 0 4px 12px rgba(255, 138, 101, 0.3);
+}
+
+/* === NÚT TRANG CHỦ (HOME) MỚI NẰM CẠNH - ĐỊNH DẠNG ĐỒNG BỘ TINH TẾ KÍNH MỜ === */
+.home-action-btn {
+    background: rgba(255, 255, 255, 0.35) !important; /* Phong cách kính mờ hòa quyện sắc nền */
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #4a148c !important;
+    padding: 0 14px;
+    font-size: 13px;
+    font-weight: bold;
+    border-radius: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.home-action-btn:hover {
+    background: #ffffff !important; /* Nổi bật hẳn khi đưa chuột vào */
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.4);
+}
+.search-action-btn:active, .home-action-btn:active {
+    transform: scale(0.96);
+}
+
+
+/* =========================================================================
+   BẢNG THỐNG KÊ ĐỘC LẬP TÍCH HỢP SÁT NHẬP NÚT XUẤT DANH SÁCH
+   ========================================================================= */
+.counter-dashboard {
+    width: 100%;
+    max-width: 480px; 
+    box-sizing: border-box;
+    margin-top: 20px;         
+    display: flex;
+    flex-direction: row;       
+    align-items: center;
+    justify-content: space-between; 
+    
+    background: rgba(33, 150, 243, 0.12);
+    padding: 8px 8px 8px 20px; 
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: bold;
+    color: #1d4ed8;
+    border: 1px solid rgba(33, 150, 243, 0.25);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.export-btn {
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(33, 150, 243, 0.2);
+    color: #1d4ed8;
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+.export-btn:hover {
+    background: #2196f3;
+    color: #ffffff;
+    border-color: #2196f3;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.25);
+}
+
+.pagination-row button:hover {
+    background: #2196f3 !important;
+    color: #fff !important;
+    border-color: #2196f3 !important;
+}
